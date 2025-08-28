@@ -1,0 +1,24 @@
+﻿@model DBMigrator.Models.MigrationReport
+@{
+    ViewData["Title"] = "Migration Report";
+}
+<h1>Migration Report</h1>
+<p>Started: @Model.StartedAt.ToLocalTime() — Completed: @Model.CompletedAt.ToLocalTime()</p>
+
+<table border="1">
+    <thead><tr><th>Object</th><th>Rows Copied</th><th>Status</th><th>Error</th></tr></thead>
+    <tbody>
+    @foreach(var r in Model.Results) {
+        <tr>
+            <td>@r.ObjectName</td>
+            <td>@r.RowsCopied</td>
+            <td>@(r.Success ? "Success" : "Failed")</td>
+            <td>@r.ErrorMessage</td>
+        </tr>
+    }
+    </tbody>
+</table>
+
+@if(Model.Errors.Any()){
+    <h3>Errors</h3><ul>@foreach(var e in Model.Errors){<li>@e</li>}</ul>
+}

@@ -1,0 +1,41 @@
+﻿@model DBMigrator.Models.MigrationSummary
+@{
+    ViewData["Title"] = "Migration Summary";
+}
+
+<h1>Migration Summary</h1>
+<p>Source: @Model.SourceProvider — Target: @Model.TargetProvider</p>
+
+<h2>Tables</h2>
+<table border="1">
+    <thead><tr><th>Schema</th><th>Name</th><th>Estimated Rows</th><th>Columns</th><th>Size (MB)</th></tr></thead>
+    <tbody>
+    @foreach(var t in Model.SourceTables) {
+        <tr>
+            <td>@t.Schema</td>
+            <td>@t.Name</td>
+            <td>@t.EstimatedRowCount</td>
+            <td>@t.ColumnCount</td>
+            <td>@(t.SizeBytes/1024/1024)</td>
+        </tr>
+    }
+    </tbody>
+</table>
+
+@if(Model.Views.Any()){
+    <h3>Views</h3><ul>@foreach(var v in Model.Views){<li>@v</li>}</ul>
+}
+@if(Model.Functions.Any()){
+    <h3>Functions</h3><ul>@foreach(var f in Model.Functions){<li>@f</li>}</ul>
+}
+@if(Model.Procedures.Any()){
+    <h3>Procedures</h3><ul>@foreach(var p in Model.Procedures){<li>@p</li>}</ul>
+}
+
+@if(Model.Warnings.Any()){
+    <h3>Warnings</h3><ul>@foreach(var w in Model.Warnings){<li>@w</li>}</ul>
+}
+
+<form asp-action="StartMigration" method="post">
+    <button type="submit">Start Migration</button>
+</form>

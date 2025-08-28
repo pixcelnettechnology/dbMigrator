@@ -1,0 +1,68 @@
+version: "3.9"
+services:
+  pg:
+    image: postgres:16
+    container_name: lab_pg
+    environment:
+      POSTGRES_PASSWORD: pass
+      POSTGRES_USER: user
+      POSTGRES_DB: srcdb
+    ports: ["5432:5432"]
+    volumes:
+      - ./seed/postgres:/docker-entrypoint-initdb.d:ro
+
+  mysql:
+    image: mysql:8.0
+    container_name: lab_mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: srcdb
+      MYSQL_USER: user
+      MYSQL_PASSWORD: pass
+    ports: ["3306:3306"]
+    command: --default-authentication-plugin=mysql_native_password
+    volumes:
+      - ./seed/mysql:/docker-entrypoint-initdb.d:ro
+
+  mssql:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: lab_mssql
+    environment:
+      ACCEPT_EULA: "Y"
+      SA_PASSWORD: "Pass@word1"
+      MSSQL_PID: "Developer"
+    ports: ["1433:1433"]
+    volumes:
+      - ./seed/mssql:/seed
+    # initialize after start
+    healthcheck:
+      test: ["CMD", "/opt/mssql-tools18/bin/sqlcmd", "-C", "-S", "localhost", "-U", "sa", "-P", "Pass@word1", "-Q", "SELECT 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+    depends_on: []
+    entrypoint: ["/bin/bash", "-c", "/opt/mssql/bin/sqlservr & sleep 20 && /opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P 'Pass@word1' -i /seed/init.sql && tail -f /dev/null"]
+
+  cockroach:
+    image: cockroachdb/cockroach:v24.2.2
+    container_name: lab_cockroach
+    command: start-single-node --insecure
+    ports: ["26257:26257", "8080:8080"]
+
+  # Oracle XE (optional but handy)
+  oracle:
+    image: gvenzl/oracle-xe:21.3.0
+    container_name: lab_oracle
+    environment:
+      ORACLE_PASSWORD: pass
+      APP_USER: appuser
+      APP_USER_PASSWORD: pass
+    ports: ["1521:1521"]
+    volumes:
+      - ./seed/oracle:/container-entrypoint-initdb.d:ro
+
+  # Spanner emulator (no GCP account needed)
+  spanner:
+    image: gcr.io/cloud-spanner-emulator/emulator
+    container_name: lab_spanner
+    ports: ["9010:9010", "9020:9020"]

@@ -1,0 +1,252 @@
+﻿@model DBMigrator.Models.LabViewModel
+@{
+    ViewData["Title"] = "Sample Lab";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="d-flex align-items-center mb-3">
+    <div class="me-3 rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center" style="width:44px;height:44px;">
+        <span class="fw-bold">LAB</span>
+    </div>
+    <div>
+        <h1 class="h3 mb-0">Sample Lab</h1>
+        <small class="text-muted">Spin up local databases and validate connectivity.</small>
+    </div>
+</div>
+
+<div class="alert alert-info">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <strong>Docker compose</strong> (copy below to <code>docker-compose.yml</code>, then run <code>docker compose up -d</code>)
+        </div>
+        <button id="copyCompose" class="btn btn-sm btn-outline-primary">Copy compose.yml</button>
+    </div>
+    <pre class="mb-0" style="white-space:pre; overflow:auto; max-height: 300px;" id="composeText">
+version: "3.9"
+services:
+  pg:
+    image: postgres:16
+    container_name: lab_pg
+    environment:
+      POSTGRES_PASSWORD: pass
+      POSTGRES_USER: user
+      POSTGRES_DB: srcdb
+    ports: ["5432:5432"]
+    volumes:
+      - ./seed/postgres:/docker-entrypoint-initdb.d:ro
+
+  mysql:
+    image: mysql:8.0
+    container_name: lab_mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: srcdb
+      MYSQL_USER: user
+      MYSQL_PASSWORD: pass
+    ports: ["3306:3306"]
+    command: --default-authentication-plugin=mysql_native_password
+    volumes:
+      - ./seed/mysql:/docker-entrypoint-initdb.d:ro
+
+  mssql:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: lab_mssql
+    environment:
+      ACCEPT_EULA: "Y"
+      SA_PASSWORD: "Pass@word1"
+      MSSQL_PID: "Developer"
+    ports: ["1433:1433"]
+    volumes:
+      - ./seed/mssql:/seed
+    healthcheck:
+      test: ["CMD", "/opt/mssql-tools18/bin/sqlcmd", "-C", "-S", "localhost", "-U", "sa", "-P", "Pass@word1", "-Q", "SELECT 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+    entrypoint: ["/bin/bash", "-c", "/opt/mssql/bin/sqlservr & sleep 20 && /opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P 'Pass@word1' -i /seed/init.sql && tail -f /dev/null"]
+
+  cockroach:
+    image: cockroachdb/cockroach:v24.2.2
+    container_name: lab_cockroach
+    command: start-single-node --insecure
+    ports: ["26257:26257", "8080:8080"]
+
+  oracle:
+    image: gvenzl/oracle-xe:21.3.0
+    container_name: lab_oracle
+    environment:
+      ORACLE_PASSWORD: pass
+      APP_USER: appuser
+      APP_USER_PASSWORD: pass
+    ports: ["1521:1521"]
+    volumes:
+      - ./seed/oracle:/container-entrypoint-initdb.d:ro
+
+  spanner:
+    image: gcr.io/cloud-spanner-emulator/emulator
+    container_name: lab_spanner
+    ports: ["9010:9010", "9020:9020"]
+</pre>
+</div>
+
+<div class="alert alert-secondary">
+    <strong>Seed SQL</strong> (create files under <code>./seed/...</code>): 
+    <a href="#seedPg" class="ms-1">Postgres</a> •
+    <a href="#seedMy" class="ms-1">MySQL</a> •
+    <a href="#seedMs" class="ms-1">SQL Server</a> •
+    <a href="#seedOra" class="ms-1">Oracle</a>
+    <pre id="seedPg" class="mt-2" style="white-space:pre; overflow:auto; max-height:260px">
+-- seed/postgres/001_init.sql
+CREATE TABLE IF NOT EXISTS public.types_demo (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(120) NOT NULL,
+  active BOOLEAN NOT NULL DEFAULT TRUE,
+  amount NUMERIC(38,9),
+  payload BYTEA,
+  created_at TIMESTAMP NOT NULL DEFAULT now(),
+  notes TEXT,
+  meta JSONB
+);
+INSERT INTO public.types_demo (name, active, amount, payload, notes, meta)
+SELECT 'row_' || g, (g % 2 = 0), (g * 1.23456789)::numeric(38,9),
+       decode(md5(g::text), 'hex'),
+       CASE WHEN g % 5 = 0 THEN repeat('x', 1000) ELSE null END,
+       jsonb_build_object('i', g, 's', 'v'||g)
+FROM generate_series(1, 15000) AS g;
+ANALYZE public.types_demo;
+</pre>
+    <pre id="seedMy" style="white-space:pre; overflow:auto; max-height:260px">
+-- seed/mysql/001_init.sql
+CREATE TABLE IF NOT EXISTS types_demo (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(120) NOT NULL,
+  active TINYINT(1) NOT NULL DEFAULT 1,
+  amount DECIMAL(38,9),
+  payload LONGBLOB,
+  created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  notes LONGTEXT,
+  meta JSON
+);
+INSERT INTO types_demo (name, active, amount, payload, notes, meta)
+VALUES ('row_1',1,123.456789123, REPEAT('A',16), NULL, JSON_OBJECT('i',1,'s','v1')),
+       ('row_2',0,999999.999999999, REPEAT('B',16), 'hello', JSON_OBJECT('i',2,'s','v2'));
+</pre>
+    <pre id="seedMs" style="white-space:pre; overflow:auto; max-height:260px">
+-- seed/mssql/init.sql
+IF DB_ID('srcdb') IS NULL CREATE DATABASE srcdb;
+GO
+USE srcdb;
+GO
+IF OBJECT_ID('[dbo].[types_demo]') IS NOT NULL DROP TABLE [dbo].[types_demo];
+CREATE TABLE [dbo].[types_demo](
+  [id] BIGINT IDENTITY(1,1) PRIMARY KEY,
+  [name] NVARCHAR(120) NOT NULL,
+  [active] BIT NOT NULL DEFAULT 1,
+  [amount] DECIMAL(38,9) NULL,
+  [payload] VARBINARY(MAX) NULL,
+  [created_at] DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+  [notes] NVARCHAR(MAX) NULL
+);
+INSERT INTO [dbo].[types_demo] ([name],[active],[amount],[payload],[notes])
+VALUES (N'row_1',1,123.456789123, 0x01, NULL),
+       (N'row_2',0,999999.999999999, 0x02, N'hello');
+</pre>
+    <pre id="seedOra" style="white-space:pre; overflow:auto; max-height:260px">
+-- seed/oracle/001_init.sql (container runs as APPUSER schema)
+BEGIN
+  EXECUTE IMMEDIATE 'DROP TABLE types_demo';
+EXCEPTION WHEN OTHERS THEN NULL; END;
+/
+CREATE TABLE types_demo (
+  id NUMBER GENERATED BY DEFAULT ON NULL AS IDENTITY PRIMARY KEY,
+  name VARCHAR2(120) NOT NULL,
+  active NUMBER(1) DEFAULT 1 NOT NULL,
+  amount NUMBER(38,9),
+  payload BLOB,
+  created_at TIMESTAMP DEFAULT SYSTIMESTAMP NOT NULL,
+  notes CLOB
+);
+INSERT INTO types_demo(name,active,amount,notes) VALUES('row_1', 1, 123.456789123, NULL);
+INSERT INTO types_demo(name,active,amount,notes) VALUES('row_2', 0, 999999.999999999, 'hello');
+COMMIT;
+</pre>
+</div>
+
+<div class="row g-4">
+@for (int i = 0; i < Model.Targets.Count; i++)
+{
+    var t = Model.Targets[i];
+    <div class="col-12 col-md-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="badge bg-dark me-2">@t.Provider</span>
+                    <strong>@t.Name</strong>
+                    <small class="text-muted d-block">@t.Hint</small>
+                </div>
+                <span class="badge bg-secondary" id="status-@i">Not tested</span>
+            </div>
+            <div class="card-body">
+                <div class="mb-2">
+                    <label class="form-label">Connection String</label>
+                    <input class="form-control" id="cs-@i" value="@t.ConnectionString" />
+                </div>
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-outline-primary btn-sm" onclick="testOne('@t.Provider', @i)">Test connectivity</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="copyCs(@i)">Copy</button>
+                </div>
+                <div class="small mt-2 text-muted" id="msg-@i"></div>
+            </div>
+        </div>
+    </div>
+}
+</div>
+
+@section Scripts {
+<script>
+    function copyText(el) {
+        navigator.clipboard.writeText(el.innerText || el.textContent);
+    }
+    document.getElementById('copyCompose')?.addEventListener('click', () => {
+        const text = document.getElementById('composeText').innerText;
+        navigator.clipboard.writeText(text);
+    });
+    function copyCs(i){
+        const v = document.getElementById('cs-'+i).value;
+        navigator.clipboard.writeText(v);
+    }
+    async function testOne(provider, i) {
+        const cs = document.getElementById('cs-'+i).value;
+        const status = document.getElementById('status-'+i);
+        const msg = document.getElementById('msg-'+i);
+        status.className = "badge bg-warning text-dark";
+        status.textContent = "Testing...";
+        msg.textContent = "";
+
+        try{
+            const body = new URLSearchParams();
+            body.append("provider", provider);
+            body.append("connectionString", cs);
+            const res = await fetch("@Url.Action("Test","Lab")", {
+                method: "POST",
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body
+            });
+            const data = await res.json();
+            if(data.ok){
+                status.className = "badge bg-success";
+                status.textContent = "OK";
+                msg.textContent = "Probe result: " + data.result;
+            }else{
+                status.className = "badge bg-danger";
+                status.textContent = "Failed";
+                msg.textContent = data.error;
+            }
+        }catch(e){
+            status.className = "badge bg-danger";
+            status.textContent = "Error";
+            msg.textContent = e.message || e;
+        }
+    }
+</script>
+}

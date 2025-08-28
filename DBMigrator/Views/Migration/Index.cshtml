@@ -1,0 +1,269 @@
+﻿@model DBMigrator.Models.MigrationRequest
+@{
+    ViewData["Title"] = "Database Migration";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="d-flex align-items-center mb-3">
+    <div class="me-3 rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width:44px;height:44px;">
+        <span class="fw-bold">DB</span>
+    </div>
+    <div>
+        <h1 class="h3 mb-0">Database Migration</h1>
+        <small class="text-muted">Homogeneous &amp; heterogeneous migrations. On-prem ↔ cloud.</small>
+    </div>
+</div>
+
+<form asp-action="Summary" method="post" class="needs-validation" novalidate>
+    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+    <div class="row g-4">
+        <!-- Source -->
+        <div class="col-12 col-lg-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white">
+                    <div class="d-flex align-items-center">
+                        <span class="badge bg-primary me-2">Source</span>
+                        <h2 class="h6 mb-0">Source Database</h2>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label" for="sourceProvider">Provider</label>
+                        <select asp-for="SourceProvider" class="form-select" id="sourceProvider">
+                            <option>Postgres</option>
+                            <option>SqlServer</option>
+                            <option>Oracle</option>
+
+                            <option>AzureSQL</option>
+                            <option>Hyperscale</option>
+                            <option>AmazonAuroraMySql</option>
+                            <option>AmazonAuroraPostgres</option>
+
+                            <option>MySql</option>
+                            <option>MariaDB</option>
+                            <option>Percona</option>
+                            <option>TiDB</option>
+
+                            <option>CockroachDB</option>
+                            <option>Db2</option>
+                            <option>Pervasive</option>
+                            <option>GoogleCloudSpanner</option>
+                        </select>
+                        <span asp-validation-for="SourceProvider" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-2">
+                        <label class="form-label" for="SourceConnectionString">Connection String</label>
+                        <input asp-for="SourceConnectionString" class="form-control" id="SourceConnectionString"
+                               placeholder="Host=...;Database=...;User Id=...;Password=..." required />
+                        <span asp-validation-for="SourceConnectionString" class="text-danger small"></span>
+                    </div>
+                    <div class="form-text" id="srcHint"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Target -->
+        <div class="col-12 col-lg-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white">
+                    <div class="d-flex align-items-center">
+                        <span class="badge bg-success me-2">Target</span>
+                        <h2 class="h6 mb-0">Target Database</h2>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label" for="targetProvider">Provider</label>
+                        <select asp-for="TargetProvider" class="form-select" id="targetProvider">
+                            <option>Postgres</option>
+                            <option>SqlServer</option>
+                            <option>Oracle</option>
+
+                            <option>AzureSQL</option>
+                            <option>Hyperscale</option>
+                            <option>AmazonAuroraMySql</option>
+                            <option>AmazonAuroraPostgres</option>
+
+                            <option>MySql</option>
+                            <option>MariaDB</option>
+                            <option>Percona</option>
+                            <option>TiDB</option>
+
+                            <option>CockroachDB</option>
+                            <option>Db2</option>
+                            <option>Pervasive</option>
+                            <option>GoogleCloudSpanner</option>
+                        </select>
+                        <span asp-validation-for="TargetProvider" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-2">
+                        <label class="form-label" for="TargetConnectionString">Connection String</label>
+                        <input asp-for="TargetConnectionString" class="form-control" id="TargetConnectionString"
+                               placeholder="Server=...;Database=...;User Id=...;Password=..." required />
+                        <span asp-validation-for="TargetConnectionString" class="text-danger small"></span>
+                    </div>
+                    <div class="form-text" id="tgtHint"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- What to migrate -->
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <h2 class="h6 mb-0">What to migrate</h2>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-12 col-md-8">
+                            <label class="form-label" for="Tables">
+                                Tables to migrate <span class="text-muted">(optional, comma-separated)</span>
+                            </label>
+                            <input asp-for="Tables" class="form-control" id="Tables" placeholder="schema.table1, table2, table3" />
+                            <span asp-validation-for="Tables" class="text-danger small"></span>
+                            <div class="form-text">Leave empty to migrate all tables.</div>
+                        </div>
+
+                        <div class="col-12 col-md-4">
+                            <label class="form-label">Objects</label>
+                            <div class="row g-2">
+                                <div class="col-12 col-sm-4">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" asp-for="IncludeViews" type="checkbox" id="IncludeViews" />
+                                        <label class="form-check-label" for="IncludeViews">Views</label>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-sm-4">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" asp-for="IncludeFunctions" type="checkbox" id="IncludeFunctions" />
+                                        <label class="form-check-label" for="IncludeFunctions">Functions</label>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-sm-4">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" asp-for="IncludeProcedures" type="checkbox" id="IncludeProcedures" />
+                                        <label class="form-check-label" for="IncludeProcedures">Procedures</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12">
+                            <div class="form-check form-switch mt-1">
+                                <input class="form-check-input" asp-for="ExactRowCounts" type="checkbox" id="ExactRowCounts" />
+                                <label class="form-check-label" for="ExactRowCounts">
+                                    Use exact row counts for Summary
+                                </label>
+                                <div class="form-text">Per-table <code>COUNT(*)</code>. Slower but precise.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Advanced options -->
+        <div class="col-12">
+            <div class="accordion shadow-sm" id="advAccordion">
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="advHeading">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#advCollapse" aria-expanded="false" aria-controls="advCollapse">
+                            Advanced options
+                        </button>
+                    </h2>
+                    <div id="advCollapse" class="accordion-collapse collapse" aria-labelledby="advHeading" data-bs-parent="#advAccordion">
+                        <div class="accordion-body">
+                            <div class="row g-3">
+                                <div class="col-12 col-md-4">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" asp-for="RunAnalyze" type="checkbox" id="RunAnalyze" />
+                                        <label class="form-check-label" for="RunAnalyze">Refresh statistics on Source (ANALYZE / STATS)</label>
+                                    </div>
+                                    <div class="form-text">Improves estimator accuracy (e.g., Postgres <code>reltuples</code>).</div>
+                                </div>
+                                <div class="col-12 col-md-4">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" asp-for="DropDestinationIfExists" type="checkbox" id="DropDestinationIfExists" />
+                                        <label class="form-check-label" for="DropDestinationIfExists">Drop &amp; re-create target tables</label>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-md-4">
+                                    <label class="form-label" for="BatchSize">Batch size</label>
+                                    <input asp-for="BatchSize" type="number" min="100" step="100" class="form-control" id="BatchSize" placeholder="10000" />
+                                    <div class="form-text">Bigger batches maximize bulk paths (COPY, SqlBulkCopy, array binding).</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div><!-- /item -->
+            </div>
+        </div>
+
+        <!-- Submit -->
+        <div class="col-12 d-flex gap-2">
+            <button type="submit" class="btn btn-primary">Analyze &amp; Show Summary</button>
+            <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+        </div>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        // Provider-specific connection string hints
+        const hints = {
+            Postgres: "Host=server;Port=5432;Database=db;Username=user;Password=pass;",
+            CockroachDB: "Host=server;Port=26257;Database=db;Username=user;Password=pass;SslMode=Require;",
+            Hyperscale: "Host=server;Port=5432;Database=db;Username=user;Password=pass;",
+            AmazonAuroraPostgres: "Host=cluster.endpoint;Port=5432;Database=db;Username=user;Password=pass;",
+
+            SqlServer: "Server=tcp:host,1433;Database=db;User Id=user;Password=pass;Encrypt=True;TrustServerCertificate=False;",
+            AzureSQL: "Server=tcp:yourserver.database.windows.net,1433;Database=db;User Id=user;Password=pass;Encrypt=True;",
+
+            Oracle: "User Id=user;Password=pass;Data Source=//host:1521/service;",
+
+            MySql: "Server=host;Port=3306;Database=db;User ID=user;Password=pass;",
+            MariaDB: "Server=host;Port=3306;Database=db;User ID=user;Password=pass;",
+            Percona: "Server=host;Port=3306;Database=db;User ID=user;Password=pass;",
+            TiDB: "Server=host;Port=4000;Database=db;User ID=user;Password=pass;",
+            AmazonAuroraMySql: "Server=cluster.endpoint;Port=3306;Database=db;User ID=user;Password=pass;",
+
+            Db2: "Driver={IBM DB2 ODBC DRIVER};Database=DB;Hostname=host;Port=50000;Protocol=TCPIP;Uid=user;Pwd=pwd;",
+            Pervasive: "Driver={Pervasive ODBC Interface};ServerName=host;DBQ=dbname;Uid=user;Pwd=pwd;",
+
+            GoogleCloudSpanner: "Data Source=projects/<project>/instances/<instance>/databases/<database>;"
+        };
+
+        function setHint(selectEl, hintEl) {
+            const val = selectEl.value;
+            hintEl.textContent = hints[val] || "";
+        }
+
+        const srcSel = document.getElementById('sourceProvider');
+        const tgtSel = document.getElementById('targetProvider');
+        const srcHint = document.getElementById('srcHint');
+        const tgtHint = document.getElementById('tgtHint');
+        setHint(srcSel, srcHint);
+        setHint(tgtSel, tgtHint);
+        srcSel.addEventListener('change', () => setHint(srcSel, srcHint));
+        tgtSel.addEventListener('change', () => setHint(tgtSel, tgtHint));
+
+        // Bootstrap client-side validation
+        (() => {
+            'use strict';
+            const forms = document.querySelectorAll('.needs-validation');
+            Array.prototype.slice.call(forms).forEach(form => {
+                form.addEventListener('submit', event => {
+                    if (!form.checkValidity()) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                    form.classList.add('was-validated');
+                }, false);
+            });
+        })();
+    </script>
+}
