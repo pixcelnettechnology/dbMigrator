@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "/Users/nagesh/Documents/Nagesh/Products/DBMigrator/DBMigrator.csproj": {}
+    "/Users/nagesh/Documents/Nagesh/dbMigrator/DBMigrator/DBMigrator.csproj": {}
   },
   "projects": {
-    "/Users/nagesh/Documents/Nagesh/Products/DBMigrator/DBMigrator.csproj": {
+    "/Users/nagesh/Documents/Nagesh/dbMigrator/DBMigrator/DBMigrator.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/Users/nagesh/Documents/Nagesh/Products/DBMigrator/DBMigrator.csproj",
+        "projectUniqueName": "/Users/nagesh/Documents/Nagesh/dbMigrator/DBMigrator/DBMigrator.csproj",
         "projectName": "DBMigrator",
-        "projectPath": "/Users/nagesh/Documents/Nagesh/Products/DBMigrator/DBMigrator.csproj",
+        "projectPath": "/Users/nagesh/Documents/Nagesh/dbMigrator/DBMigrator/DBMigrator.csproj",
         "packagesPath": "/Users/nagesh/.nuget/packages/",
-        "outputPath": "/Users/nagesh/Documents/Nagesh/Products/DBMigrator/obj/",
+        "outputPath": "/Users/nagesh/Documents/Nagesh/dbMigrator/DBMigrator/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "/Users/nagesh/.nuget/NuGet/NuGet.Config"
@@ -20,7 +20,6 @@
           "net9.0"
         ],
         "sources": {
-          "/usr/local/share/dotnet/library-packs": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
@@ -93,7 +92,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/9.0.301/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/9.0.304/PortableRuntimeIdentifierGraph.json"
         }
       }
     }

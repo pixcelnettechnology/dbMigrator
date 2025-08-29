@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "paAQaXTruu4=",
+  "dgSpecHash": "SCklQqDm6Wc=",
   "success": true,
-  "projectFilePath": "/Users/nagesh/Documents/Nagesh/Products/DBMigrator/DBMigrator.csproj",
+  "projectFilePath": "/Users/nagesh/Documents/Nagesh/dbMigrator/DBMigrator/DBMigrator.csproj",
   "expectedPackageFiles": [
     "/Users/nagesh/.nuget/packages/azure.core/1.47.1/azure.core.1.47.1.nupkg.sha512",
     "/Users/nagesh/.nuget/packages/azure.identity/1.14.2/azure.identity.1.14.2.nupkg.sha512",

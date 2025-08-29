@@ -61,8 +61,3 @@ services:
     volumes:
       - ./seed/oracle:/container-entrypoint-initdb.d:ro
 
-  # Spanner emulator (no GCP account needed)
-  spanner:
-    image: gcr.io/cloud-spanner-emulator/emulator
-    container_name: lab_spanner
-    ports: ["9010:9010", "9020:9020"]
